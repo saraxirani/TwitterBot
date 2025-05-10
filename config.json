@@ -1,0 +1,9 @@
+{
+  "deepseekApiKey": "sk-eb0a046e0319456aa97c7bc7bb244349",
+  "openaiApiKey": "",
+  "twitterConfig": {
+    "postInterval": 24,
+    "retryDelay": 300,
+    "maxRetries": 1
+  }
+}

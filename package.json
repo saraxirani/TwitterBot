@@ -1,0 +1,23 @@
+{
+  "name": "twitter-auto-poster-bot-ai",
+  "version": "2.0.0",
+  "description": "Automatically posts tweets about GiveRep using AI generation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "diagnostics": "node index.js --diagnostics",
+    "schedule": "node index.js --schedule",
+    "retry": "node index.js --retry",
+    "analyze": "node index.js --analyze"
+  },
+  "author": "Mohammed hamzeh",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.24.1",
+    "twitter-api-v2": "^1.16.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
