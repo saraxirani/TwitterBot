@@ -29,8 +29,8 @@ A Twitter bot that automatically generates and posts tweets about the GiveRep pr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/twitter-auto-poster-bot-ai.git
-cd twitter-auto-poster-bot-ai
+git clone https://github.com/saraxirani/TwitterBotVer2.git
+cd /TwitterBotVer2
 ```
 
 2. Install dependencies:
@@ -123,7 +123,7 @@ npm run analyze
 ## Project Structure
 
 ```
-twitter-auto-poster-bot-ai/
+/TwitterBotVer2/
 ├── src/
 │   ├── config/          # Configuration handling
 │   │   └── config.json          # Configuration
