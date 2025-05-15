@@ -2,22 +2,22 @@
   "templates": [
     {
       "id": 1,
-      "name": "معرفی پروژه",
-      "content": "پروژه GiveRep در شبکه Sui راه‌اندازی شده و در حال ارائه ایردراپ است! به جامعه بپیوندید و با مشارکت پاداش دریافت کنید.",
+      "name": "Project Introduction",
+      "content": "GiveRep project on Sui network has launched and is distributing airdrops! Join the community and earn rewards by participating.",
       "tags": [
-        "معرفی",
-        "ایردراپ",
+        "Introduction",
+        "Airdrop",
         "Sui"
       ]
     },
     {
       "id": 2,
-      "name": "نحوه مشارکت",
-      "content": "برای مشارکت در پروژه GiveRep و دریافت پاداش، کافیست در وبسایت رسمی ثبت‌نام کنید و مراحل احراز هویت را تکمیل نمایید.",
+      "name": "How to Participate",
+      "content": "To participate in the GiveRep project and receive rewards, simply register on the official website and complete the verification process.",
       "tags": [
-        "آموزشی",
-        "مشارکت",
-        "پاداش"
+        "Tutorial",
+        "Participation",
+        "Rewards"
       ]
     }
   ],

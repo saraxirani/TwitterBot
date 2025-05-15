@@ -29,8 +29,8 @@ A Twitter bot that automatically generates and posts tweets about the GiveRep pr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/saraxirani/TwitterBotVer2.git
-cd /TwitterBotVer2
+git clone https://github.com/yourusername/twitter-auto-poster-bot-ai.git
+cd twitter-auto-poster-bot-ai
 ```
 
 2. Install dependencies:
@@ -96,6 +96,21 @@ npm run schedule
 node index.js --schedule --interval=6
 ```
 
+### Using GitHub Actions for Automation
+
+This repository includes a GitHub Actions workflow that automatically runs the bot every 3 hours. To use it:
+
+1. Push this repository to GitHub
+2. Go to your repository's Settings → Secrets and Variables → Actions
+3. Add the following secrets:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `DEEPSEEK_API_KEY`: Your DeepSeek API key
+   - Any other API keys needed for your configuration
+4. The workflow will automatically start running based on the schedule (every 3 hours)
+5. You can also manually trigger the workflow from the Actions tab in your repository
+
+To modify the schedule, edit the `.github/workflows/tweet-scheduler.yml` file and change the cron expression.
+
 ### Diagnostics
 
 To check your configuration without posting:
@@ -123,7 +138,10 @@ npm run analyze
 ## Project Structure
 
 ```
-/TwitterBotVer2/
+twitter-auto-poster-bot-ai/
+├── .github/
+│   └── workflows/       # GitHub Actions workflows
+│       └── tweet-scheduler.yml # Scheduled tweet posting workflow
 ├── src/
 │   ├── config/          # Configuration handling
 │   │   └── config.json          # Configuration
@@ -136,6 +154,7 @@ npm run analyze
 ├── accounts.txt         # Twitter credentials
 ├── tweet_history.json   # Tweet history storage
 ├── failed_tweets.json   # Failed tweets for retry
+├── fallback_tweets.json # Predefined tweets for fallback
 ├── content_templates.json # Tweet templates
 └── index.js             # Entry point
 ```

@@ -1,12 +1,13 @@
 /**
  * AI Service for tweet generation
- * Supports multiple AI providers: AIML, DeepSeek, OpenAI
+ * Supports multiple AI providers: DeepSeek, OpenAI
  */
 
 const OpenAI = require("openai");
+const fs = require('fs');
+const path = require('path');
 
 // Constants
-const DEFAULT_AIML_API_KEY = "e9e0f18961c44e03a6008196d4d781e6";
 const REQUIRED_TAGS = "@giverep @PawtatoFinance $REP";
 
 /**
@@ -42,16 +43,19 @@ function detectLanguage(text) {
  */
 function initializeAI(config) {
   // Look for API keys in environment variables first, then in config
-  const AIML_API_KEY = process.env.AIML_API_KEY || config.aimlApiKey || DEFAULT_AIML_API_KEY;
-  const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || config.deepseekApiKey || "";
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY || config.openaiApiKey || "";
+  const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || config.deepseekApiKey || "";
 
   let openai;
   let aiServiceName = "";
 
-  if (AIML_API_KEY) {
-    console.log('🤖 Using AIML API for AI tweet generation');
-    aiServiceName = "AIML";
+  // Changed order to prioritize OpenAI over DeepSeek due to balance issues
+  if (OPENAI_API_KEY) {
+    console.log('🤖 Using OpenAI for AI tweet generation');
+    openai = new OpenAI({
+      apiKey: OPENAI_API_KEY,
+    });
+    aiServiceName = "OpenAI";
   } else if (DEEPSEEK_API_KEY) {
     console.log('🤖 Using DeepSeek for AI tweet generation');
     openai = new OpenAI({
@@ -59,15 +63,8 @@ function initializeAI(config) {
       baseURL: "https://api.deepseek.com/v1",
     });
     aiServiceName = "DeepSeek";
-  } else if (OPENAI_API_KEY) {
-    console.log('🤖 Using OpenAI for AI tweet generation');
-    openai = new OpenAI({
-      apiKey: OPENAI_API_KEY,
-    });
-    aiServiceName = "OpenAI";
   } else {
-    console.error("❌ No AI API key found. Please set an API key for AIML, DeepSeek or OpenAI.");
-    console.log("You can set the key in environment variables, config.json, or directly in the code.");
+    console.log("⚠️ No AI API key found or insufficient balance. Using fallback text generation.");
     aiServiceName = "Fallback";
   }
 
@@ -82,38 +79,42 @@ async function getAlternativeAIText() {
   try {
     console.log('Attempting to use alternative text generation method...');
     
-    // Predefined responses in different languages
-    const languages = [
-      // Arabic
-      'مشروع GiveRep على شبكة Sui يوزع الآن! انضم وشارك في المجتمع للحصول على مكافآت. سارع بالتسجيل الآن قبل نفاذ الجوائز',
+    // Load fallback tweets from the JSON file
+    const fallbackTweetsPath = path.join(__dirname, '..', '..', 'fallback_tweets.json');
+    
+    // Check if fallback tweets file exists
+    if (fs.existsSync(fallbackTweetsPath)) {
+      const fallbackTweetsData = JSON.parse(fs.readFileSync(fallbackTweetsPath, 'utf8'));
       
-      // Spanish
-      '¡El airdrop de GiveRep en la red Sui ya está activo! Únete y participa en la comunidad para obtener recompensas. ¡Regístrate ahora antes de que se agoten los premios!',
-      
-      // Korean
-      'GiveRep 프로젝트가 Sui 네트워크에서 에어드롭을 시작했습니다! 지금 참여하고 보상을 받으세요. 커뮤니티에 가입하고 경험을 공유하세요.',
-      
-      // French
-      'Projet GiveRep sur le réseau Sui distribue des tokens! Rejoignez la communauté pour recevoir des récompenses. Inscrivez-vous maintenant avant la fin de l\'airdrop!',
-      
-      // Chinese
-      'GiveRep项目在Sui网络上发放空投！加入社区并参与互动来获取奖励。立即注册，奖励有限，先到先得！',
-      
-      // Japanese
-      'GiveRepプロジェクトは、Suiネットワークでエアドロップを開始しました！今すぐ参加して報酬を獲得してください。コミュニティに参加して体験を共有しましょう。',
-      
-      // English
+      if (fallbackTweetsData && fallbackTweetsData.fallbackTweets && fallbackTweetsData.fallbackTweets.length > 0) {
+        // Select a random tweet from the predefined list
+        const selectedText = fallbackTweetsData.fallbackTweets[Math.floor(Math.random() * fallbackTweetsData.fallbackTweets.length)];
+        console.log('Selected fallback text from predefined list: ' + selectedText.substring(0, 40) + '...');
+        return selectedText;
+      }
+    }
+    
+    // Fallback to hardcoded responses if file doesn't exist or is empty
+    console.log('Fallback tweets file not found or empty. Using hardcoded responses.');
+    
+    // Enhanced predefined responses (English only as requested)
+    const englishResponses = [
       'GiveRep project on Sui network is now distributing airdrops! Join the community and earn rewards by participating. Register now before rewards run out!',
-      
-      // Persian
-      'پروژه GiveRep در شبکه Sui ایردراپ را آغاز کرده است! همین حالا مشارکت کنید و پاداش دریافت کنید. به جامعه بپیوندید و تجربه خود را به اشتراک بگذارید!'
+      'GiveRep airdrop on Sui network is live! Join the community and earn rewards by participating. Register now!',
+      'The GiveRep reputation protocol on Sui blockchain is revolutionizing community engagement. Join now to earn rewards!',
+      'Want to earn rewards for your participation? Join GiveRep on Sui network and start earning today! Limited spots available.',
+      'GiveRep airdrop alert! Participate in the Sui blockchain community and get rewarded for your contributions. #Crypto',
+      'GiveRep brings reputation management to Sui blockchain! Participate in the airdrop and be among the first to experience it.',
+      'New on Sui network: GiveRep reputation protocol with community rewards! Register now before the airdrop ends.',
+      'Earn tokens on Sui network with GiveRep! Join the reputation protocol that rewards community participation.',
+      'GiveRep is launching their token airdrop on Sui network! Verify your account now to qualify for rewards.',
+      "Missed previous airdrops? Don't miss GiveRep on Sui network! Join now and earn reputation tokens!",
     ];
     
-    console.log(`Using predefined text in a random language as fallback (from ${languages.length} available languages)`);
-    const randomLang = languages[Math.floor(Math.random() * languages.length)];
-    console.log(`Selected language sample: ${randomLang.substring(0, 30)}...`);
-    
-    return randomLang;
+    // Select a random English response
+    const selectedText = englishResponses[Math.floor(Math.random() * englishResponses.length)];
+    console.log('Selected fallback text: ' + selectedText.substring(0, 40) + '...');
+    return selectedText;
   } catch (error) {
     console.error('Failed to get text from alternative sources:', error.message);
     return 'GiveRep airdrop on Sui network is now live! Join the community and earn rewards by participating.';
@@ -129,104 +130,87 @@ async function getAlternativeAIText() {
  */
 async function generateTweet(aiClient, aiServiceName, template = null) {
   try {
-    // Skip AI call if no API keys are available
-    if (aiServiceName === "Fallback") {
-      console.log('No AI API key available, using fallback text...');
+    // If no AI client available or it's set to Fallback, use alternative text immediately
+    if (!aiClient || aiServiceName === "Fallback") {
+      console.log('No API available, using fallback text generation directly...');
       const alternativeText = await getAlternativeAIText();
-      const tweetText = `${alternativeText} ${REQUIRED_TAGS}`;
-      
-      // Ensure the tweet is not too long
-      if (tweetText.length > 280) {
-        // Truncate the main text to make room for tags
-        const maxMainTextLength = 280 - REQUIRED_TAGS.length - 1; // -1 for the space
-        const finalTweet = `${alternativeText.substring(0, maxMainTextLength)}... ${REQUIRED_TAGS}`;
-        
-        console.log("\n--- Fallback Tweet ---");
-        console.log(finalTweet);
-        console.log("--- End of Tweet ---\n");
-        console.log(`Tweet length: ${finalTweet.length} characters (max: 280)`);
-        
-        return finalTweet;
-      }
-      
-      console.log("\n--- Fallback Tweet ---");
-      console.log(tweetText);
-      console.log("--- End of Tweet ---\n");
-      console.log(`Tweet length: ${tweetText.length} characters (max: 280)`);
-      
-      return tweetText;
+      return `${alternativeText} ${REQUIRED_TAGS}`;
     }
-    
-    // Template-based prompt if available
-    let promptBase = 'Create a 250-character text about the GiveRep airdrop project in a random human language';
-    
-    if (template) {
-      promptBase = `Create a 250-character text based on this theme: "${template.content}" for the GiveRep airdrop project in a random human language`;
-    }
-    
-    // Exactly what was used in the original code
-    const prompt = 'یک متن 250 حرفی در رابطه با پروژه ایردراپ giverep برام درست کن به یک زبان انسان بصورت رندوم';
 
-    console.log(`Connecting to ${aiServiceName} AI for tweet generation...`);
+    let promptType, promptText;
+    
+    // Set a prompt based on template or default
+    if (template) {
+      promptType = "template";
+      promptText = `Write a tweet about the GiveRep project based on this template: "${template.content}" The style should match the template but the content must be unique and varied to avoid detection as duplicate. Keep it under 250 characters. Include hashtags when relevant. Write ONLY in English language. Do not include the tags ${REQUIRED_TAGS} as they will be added separately.`;
+    } else {
+      // Random prompt types for variety
+      const promptTypes = [
+        "standard",
+        "news",
+        "benefits",
+        "tutorial",
+        "announcement"
+      ];
+      promptType = promptTypes[Math.floor(Math.random() * promptTypes.length)];
+      
+      switch(promptType) {
+        case "news":
+          promptText = "Write a tweet announcing a recent update or feature of the GiveRep reputation protocol on the Sui network. Focus on why users should be excited. Keep it under 250 characters. Write ONLY in English language. Include hashtags when relevant but do not include these tags: " + REQUIRED_TAGS;
+          break;
+        case "benefits":
+          promptText = "Write a tweet highlighting a benefit of using GiveRep reputation protocol on the Sui blockchain network. Keep it under 250 characters. Write ONLY in English language. Include hashtags when relevant but do not include these tags: " + REQUIRED_TAGS;
+          break;
+        case "tutorial":
+          promptText = "Write a tweet with a quick tip about using the GiveRep protocol or participating in their community. Keep it under 250 characters. Write ONLY in English language. Include hashtags when relevant but do not include these tags: " + REQUIRED_TAGS;
+          break;
+        case "announcement":
+          promptText = "Write a tweet announcing that GiveRep airdrop is open for participation. Focus on urgency and benefits. Keep it under 250 characters. Write ONLY in English language. Include hashtags when relevant but do not include these tags: " + REQUIRED_TAGS;
+          break;
+        default: // standard
+          promptText = "Write an engaging tweet about the GiveRep reputation protocol on the Sui blockchain. Keep it under 250 characters. Write ONLY in English language. Include hashtags when relevant but do not include these tags: " + REQUIRED_TAGS;
+      }
+    }
+    
+    console.log(`Using ${promptType} prompt`);
     
     try {
-      let generatedText;
+      // Both DeepSeek and OpenAI use the same API format with the openai client
+      const response = await aiClient.chat.completions.create({
+        model: aiServiceName === "DeepSeek" ? "deepseek-chat" : "gpt-3.5-turbo", // Using gpt-3.5-turbo instead of gpt-4 to reduce costs
+        messages: [
+          { role: "system", content: "You are an expert in writing engaging social media content. Your task is to write unique, creative tweets about the GiveRep project. Write ONLY in English language." },
+          { role: "user", content: promptText }
+        ],
+        max_tokens: 150, // Reduced to save costs
+        temperature: 0.8,
+      });
       
-      if (aiServiceName === "AIML") {
-        // Use AIML API
-        const response = await fetch('https://api.aimlapi.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.AIML_API_KEY || DEFAULT_AIML_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: prompt }],
-            max_tokens: 300,
-            temperature: 0.7
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`AIML API error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          throw new Error('Invalid response from AIML API');
-        }
-
-        generatedText = data.choices[0].message.content.trim();
-      } else {
-        // Use OpenAI/DeepSeek
-        const response = await aiClient.chat.completions.create({
-          model: aiServiceName === "DeepSeek" ? "deepseek-chat" : "gpt-3.5-turbo",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 300,
-          temperature: 0.7,
-        });
-        
-        if (!response.choices || !response.choices[0] || !response.choices[0].message) {
-          throw new Error(`Invalid response from ${aiServiceName} API`);
-        }
-        
-        generatedText = response.choices[0].message.content.trim();
+      let tweet = response.choices[0]?.message?.content.trim();
+      
+      // Check for empty response
+      if (!tweet) {
+        throw new Error("Empty response from AI");
       }
       
-      console.log("\n--- AI Generated Text ---");
-      console.log(generatedText);
-      console.log("--- End of AI Text ---\n");
+      // Enforce English language tweets
+      const lang = detectLanguage(tweet);
+      if (lang !== 'en') {
+        console.log(`Tweet is in ${lang} language. Using fallback English text...`);
+        // Use fallback instead of trying again to avoid unnecessary API calls
+        const alternativeText = await getAlternativeAIText();
+        return `${alternativeText} ${REQUIRED_TAGS}`;
+      }
       
       // Add the required tags
-      const tweetText = `${generatedText} ${REQUIRED_TAGS}`;
+      const tweetText = `${tweet} ${REQUIRED_TAGS}`;
       
       // Validate tweet length
       if (tweetText.length > 280) {
         console.warn('⚠️ Generated tweet is too long, truncating...');
         // Truncate the main text to make room for tags
         const maxMainTextLength = 280 - REQUIRED_TAGS.length - 1; // -1 for the space
-        const truncatedText = generatedText.substring(0, maxMainTextLength) + '...';
+        const truncatedText = tweet.substring(0, maxMainTextLength) + '...';
         const finalTweet = `${truncatedText} ${REQUIRED_TAGS}`;
         
         console.log("\n--- Final Tweet (Truncated) ---");
@@ -243,27 +227,20 @@ async function generateTweet(aiClient, aiServiceName, template = null) {
       console.log(`Tweet length: ${tweetText.length} characters (max: 280)`);
       
       return tweetText;
-    } catch (aiError) {
-      console.error(`${aiServiceName} API Error:`, aiError.message);
+    } catch (apiError) {
+      // Handle API errors (including Insufficient Balance)
+      console.error(`API Error (${aiServiceName}):`, apiError.message);
+      console.log("\n⚠️ API call failed. Using fallback text generation...");
       
-      // Try to get alternative AI text if primary AI fails
-      console.log(`\n⚠️ ${aiServiceName} API call failed. Trying alternative source...`);
+      // Get alternative text as fallback
       const alternativeText = await getAlternativeAIText();
-      
-      // Combine with required tags
-      let tweetText = `${alternativeText} ${REQUIRED_TAGS}`;
+      const tweetText = `${alternativeText} ${REQUIRED_TAGS}`;
       
       // Ensure the tweet is not too long
       if (tweetText.length > 280) {
-        // Truncate the main text to make room for tags
         const maxMainTextLength = 280 - REQUIRED_TAGS.length - 1; // -1 for the space
-        tweetText = `${alternativeText.substring(0, maxMainTextLength)}... ${REQUIRED_TAGS}`;
+        return `${alternativeText.substring(0, maxMainTextLength)}... ${REQUIRED_TAGS}`;
       }
-      
-      console.log("\n--- Alternative Tweet ---");
-      console.log(tweetText);
-      console.log("--- End of Tweet ---\n");
-      console.log(`Tweet length: ${tweetText.length} characters (max: 280)`);
       
       return tweetText;
     }
@@ -273,7 +250,7 @@ async function generateTweet(aiClient, aiServiceName, template = null) {
       console.error("API Response:", error.response.data);
     }
     
-    // Final fallback if everything else fails
+    // Final fallback if everything else fails - English only
     const finalFallbackTweet = `GiveRep airdrop on Sui network is now live! Join the community and earn rewards by participating. Register now! ${REQUIRED_TAGS}`;
     console.log("\n--- Emergency Fallback Tweet ---");
     console.log(finalFallbackTweet);
@@ -349,4 +326,4 @@ module.exports = {
   getAlternativeAIText,
   selectSmartTemplate,
   REQUIRED_TAGS
-}; 
+};
