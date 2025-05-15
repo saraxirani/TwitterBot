@@ -1,0 +1,33 @@
+name: Scheduled Tweet Posting
+
+on:
+  schedule:
+    # Run every 3 hours
+    - cron: '0 */3 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  post-tweet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run tweet poster
+        env:
+          # Set environment variables for API keys and tokens
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          # You can also add Twitter API keys as secrets if not in accounts.txt
+          # TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        run: node index.js --schedule
